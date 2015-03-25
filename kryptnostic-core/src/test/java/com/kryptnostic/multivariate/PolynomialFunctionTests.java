@@ -387,8 +387,8 @@ public class PolynomialFunctionTests {
         logger.info( "Non-linear pipeline stage generation took {} ms", millis );
 
         BitVector input = BitVectors.randomVector( inputLength << 1 );
-        BitVector inputLower = stage.getLower().apply( inner.apply( input ) );
-        BitVector inputUpper = stage.getUpper().apply( inner.apply( input ) );
+        BitVector inputLower = stage.getLower().apply( input );
+        BitVector inputUpper = stage.getUpper().apply( input );
         BitVector expected = f.apply( inner.apply( input ) );
 
         BitVector actual = stage.getC1().multiply( inputLower );

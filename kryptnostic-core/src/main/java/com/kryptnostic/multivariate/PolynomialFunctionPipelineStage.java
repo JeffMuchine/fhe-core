@@ -29,14 +29,14 @@ public class PolynomialFunctionPipelineStage {
         c2 = EnhancedBitMatrix.randomInvertibleMatrix(f.getOutputLength());
         combination = SimplePolynomialFunctions.linearCombination(c1, c2);
         Pair<SimplePolynomialFunction, SimplePolynomialFunction> functionPair = SimplePolynomialFunctions
-                .randomlyPartitionMVQ(f);
+                .randomlyPartitionMVQ(f.compose(inner));
         try {
             lower = c1.inverse().multiply(functionPair.getLeft());
             upper = c2.inverse().multiply(functionPair.getRight());
         } catch (SingularMatrixException e) {
             logger.error("Encountered singular matrix, where none should be possible due to generation procedure.");
         }
-        step = SimplePolynomialFunctions.concatenate(lower, upper).compose(inner);
+        step = SimplePolynomialFunctions.concatenate(lower, upper);
     }
 
     public EnhancedBitMatrix getC1() {
