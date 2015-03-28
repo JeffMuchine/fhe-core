@@ -12,18 +12,15 @@ import cern.colt.bitvector.BitVector;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.kryptnostic.multivariate.gf2.Monomial;
-import com.kryptnostic.multivariate.gf2.SimplePolynomialFunction;
 
 public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
     private static final long                       serialVersionUID  = -3308994228325375229L;
     private static final Logger                     logger            = LoggerFactory
                                                                               .getLogger( OptimizedPolynomialFunctionGF2.class );
-    protected static final int                      CONCURRENCY_LEVEL = Math.max( Runtime.getRuntime()
-                                                                              .availableProcessors() - 1, 1 );
+    protected static final int                      CONCURRENCY_LEVEL = Runtime.getRuntime().availableProcessors();
     protected static final ListeningExecutorService executor          = MoreExecutors.listeningDecorator( Executors
                                                                               .newFixedThreadPool( CONCURRENCY_LEVEL ) );
 
@@ -59,17 +56,20 @@ public class OptimizedPolynomialFunctionGF2 extends BasePolynomialFunction {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    BitVector intermediary = new BitVector( outputLength );
-                    for ( int i = fromIndex; i < toIndex; ++i ) {
-                        Monomial term = monomials[ i ];
-                        if ( term.eval( input ) ) {
-                            intermediary.xor( contributions[ i ] );
+                    try {
+                        BitVector intermediary = new BitVector( outputLength );
+                        for ( int i = fromIndex; i < toIndex; ++i ) {
+                            Monomial term = monomials[ i ];
+                            if ( term.eval( input ) ) {
+                                intermediary.xor( contributions[ i ] );
+                            }
                         }
+                        synchronized ( result ) {
+                            result.xor( intermediary );
+                        }
+                    } finally {
+                        latch.countDown();
                     }
-                    synchronized ( result ) {
-                        result.xor( intermediary );
-                    }
-                    latch.countDown();
                 }
             };
             executor.execute( r );
